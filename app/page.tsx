@@ -174,10 +174,16 @@ export default function Home() {
                   {stock180d?.toFixed(0) ?? "N/A"}%
                 </p>
                 <p className="font-semibold text-sm">
-                  Average Buy box price: $
+                  Average Buy box price:
                   {productData.stats?.buyBoxStats?.[
                     productData.stats.buyBoxSellerId
-                  ]?.avgPrice / 100 ?? "N/A"}
+                  ]?.avgPrice
+                    ? `$${(
+                        productData.stats.buyBoxStats[
+                          productData.stats.buyBoxSellerId
+                        ].avgPrice / 100
+                      ).toFixed(2)}`
+                    : "N/A"}
                 </p>
 
                 {/* BULLET LIST */}

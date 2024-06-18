@@ -36,25 +36,52 @@ export default function Home() {
   const [stock30d, setStock30d] = useState<number | undefined>(undefined);
   const [stock90d, setStock90d] = useState<number | undefined>();
   const [stock180d, setStock180d] = useState<number | undefined>();
-  const [salesRank, setSalesRank] = useState<Array<number | undefined>>();
+  const [salesRank, setSalesRank] = useState<Array<number | undefined>>([]);
   const [summary, setSummary] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
 
   const fetchProduct = async (productId: string) => {
     try {
       setLoading(true);
-      setProductData(null);
       const res = await fetch(`/api/product/${productId}`);
       const data = await res.json();
       setProductData(data.products[0]);
     } catch (e) {
       setLoading(false);
       console.log("Failed to fetch product data: ", e);
-      setProductData(null);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (productData) {
+      calculateStock30(setStock30d, productData);
+      calculateStock90(setStock90d, productData);
+      calculateStock180(setStock180d, productData);
+      getSalesRank();
+    }
+  }, [productData]);
+
+  useEffect(() => {
+    if (
+      productData &&
+      stock30d !== undefined &&
+      stock90d !== undefined &&
+      stock180d !== undefined &&
+      salesRank.length > 0 &&
+      !salesRank.includes(undefined)
+    ) {
+      handleSummarize(
+        productData,
+        stock30d,
+        stock90d,
+        stock180d,
+        salesRank,
+        setSummary
+      );
+    }
+  }, [productData, stock30d, stock90d, stock180d, salesRank]);
 
   const getSalesRank = () => {
     let salesRankArr = [];
@@ -71,20 +98,29 @@ export default function Home() {
   };
 
   useEffect(() => {
-    calculateStock30(setStock30d, productData);
-    calculateStock90(setStock90d, productData);
-    calculateStock180(setStock180d, productData);
-    getSalesRank();
-
-    handleSummarize(
-      productData,
-      stock30d,
-      stock90d,
-      stock180d,
-      salesRank,
-      setSummary
-    );
+    if (productData) {
+      getSalesRank();
+    }
   }, [productData]);
+
+  useEffect(() => {
+    if (
+      productData &&
+      stock30d !== undefined &&
+      stock90d !== undefined &&
+      stock180d !== undefined &&
+      salesRank.length > 0
+    ) {
+      handleSummarize(
+        productData,
+        stock30d,
+        stock90d,
+        stock180d,
+        salesRank,
+        setSummary
+      );
+    }
+  }, [productData, stock30d, stock90d, stock180d, salesRank]);
 
   return (
     <div className="w-full h-screen">

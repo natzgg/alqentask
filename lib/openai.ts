@@ -22,6 +22,7 @@ export async function summarizeText({
   stock180d: number | undefined;
   salesRank: Array<number | undefined> | undefined;
 }) {
+  console.log("test", stock30d, stock90d, stock180d, salesRank);
   if (!productData?.asin) {
     console.log("Product ASIN is undefined or null");
     return null;

@@ -4,7 +4,13 @@ import Image from "next/image";
 import Search from "./_components/search";
 import { useState, useEffect } from "react";
 import VisitChart from "./_components/chart";
-import { summarizeText } from "@/lib/openai";
+
+import {
+  calculateStock180,
+  calculateStock30,
+  calculateStock90,
+  handleSummarize,
+} from "@/lib/helpers";
 
 export type Product = {
   title: string;
@@ -27,7 +33,7 @@ export type Product = {
 
 export default function Home() {
   const [productData, setProductData] = useState<Product | null>(null);
-  const [stock30d, setStock30d] = useState<number | undefined>();
+  const [stock30d, setStock30d] = useState<number | undefined>(undefined);
   const [stock90d, setStock90d] = useState<number | undefined>();
   const [stock180d, setStock180d] = useState<number | undefined>();
   const [salesRank, setSalesRank] = useState<Array<number | undefined>>();
@@ -50,34 +56,6 @@ export default function Home() {
     }
   };
 
-  const calculateStock30 = () => {
-    const filtered = productData?.stats.outOfStockPercentage30.filter(
-      (num: any): num is number => num !== -1 && typeof num === "number"
-    );
-
-    // Calculate the average
-    const total =
-      filtered?.reduce((acc: number, num: number) => acc + num, 0) || 0;
-    const count = filtered?.length || 1; // Avoid division by zero
-    const average = total / count;
-
-    setStock30d(100 - average);
-  };
-
-  const calculateStock90 = () => {
-    const filtered = productData?.stats.outOfStockPercentage90.filter(
-      (num: any): num is number => num !== -1 && typeof num === "number"
-    );
-
-    // Calculate the average
-    const total =
-      filtered?.reduce((acc: number, num: number) => acc + num, 0) || 0;
-    const count = filtered?.length || 1; // Avoid division by zero
-    const average = total / count;
-
-    setStock90d(100 - average);
-  };
-
   const getSalesRank = () => {
     let salesRankArr = [];
     const salesRank30 = productData?.stats.salesRankDrops30;
@@ -92,44 +70,21 @@ export default function Home() {
     setSalesRank(salesRankArr);
   };
 
-  const handleSummarize = async () => {
-    try {
-      const result = await summarizeText({
-        productData,
-        stock30d,
-        stock90d,
-        stock180d,
-        salesRank,
-      });
-      setSummary(result); // Update state with the summary returned from summarizeText
-    } catch (error) {
-      console.error("Error summarizing text:", error);
-      setSummary(null); // Handle error case by setting summary to null or handle differently as needed
-    }
-  };
-
   useEffect(() => {
-    calculateStock30();
-    calculateStock90();
-    calculateStock180();
+    calculateStock30(setStock30d, productData);
+    calculateStock90(setStock90d, productData);
+    calculateStock180(setStock180d, productData);
     getSalesRank();
 
-    handleSummarize();
-  }, [productData]);
-
-  const calculateStock180 = () => {
-    const filtered = productData?.stats.outOfStockPercentage30.filter(
-      (num: any): num is number => num !== -1 && typeof num === "number"
+    handleSummarize(
+      productData,
+      stock30d,
+      stock90d,
+      stock180d,
+      salesRank,
+      setSummary
     );
-
-    // Calculate the average
-    const total =
-      filtered?.reduce((acc: number, num: number) => acc + num, 0) || 0;
-    const count = filtered?.length || 1; // Avoid division by zero
-    const average = total / count;
-
-    setStock180d(100 - average);
-  };
+  }, [productData]);
 
   return (
     <div className="w-full h-screen">
@@ -184,7 +139,7 @@ export default function Home() {
                   {stock180d?.toFixed(0) ?? "N/A"}%
                 </p>
                 <p className="font-semibold text-sm">
-                  Average Buy box price:{" "}
+                  Average Buy box price: $
                   {productData.stats?.buyBoxStats?.[
                     productData.stats.buyBoxSellerId
                   ]?.avgPrice / 100 ?? "N/A"}

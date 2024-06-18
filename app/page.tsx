@@ -84,17 +84,16 @@ export default function Home() {
   }, [productData, stock30d, stock90d, stock180d, salesRank]);
 
   const getSalesRank = () => {
-    let salesRankArr = [];
-    const salesRank30 = productData?.stats.salesRankDrops30;
-    salesRankArr.push(salesRank30);
-    const salesRank90 = productData?.stats.salesRankDrops90;
-    salesRankArr.push(salesRank90);
-    const salesRank180 = productData?.stats.salesRankDrops180;
-    salesRankArr.push(salesRank180);
-    const salesRank365 = productData?.stats.salesRankDrops365;
-    salesRankArr.push(salesRank365);
-
-    setSalesRank(salesRankArr);
+    if (productData) {
+      const { stats } = productData;
+      const salesRankArr = [
+        stats.salesRankDrops30,
+        stats.salesRankDrops90,
+        stats.salesRankDrops180,
+        stats.salesRankDrops365,
+      ];
+      setSalesRank(salesRankArr);
+    }
   };
 
   useEffect(() => {
